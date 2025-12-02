@@ -1,0 +1,168 @@
+% A1 Portrait Poster Template (beamerposter)
+\documentclass[final]{beamer}
+
+% Poster package
+\usepackage[size=a1,orientation=portrait,scale=1.2]{beamerposter}
+
+% Theme
+\usetheme{default}
+
+% Logo positioning
+\usepackage{graphicx}
+\usepackage{textpos}
+\setlength{\TPHorizModule}{1cm}
+\setlength{\TPVertModule}{1cm}
+
+% Colors
+\definecolor{darkblue}{RGB}{20,20,80}
+\definecolor{lightgray}{RGB}{240,240,240}
+
+\setbeamercolor{block title}{fg=white,bg=darkblue}
+\setbeamercolor{block body}{fg=black,bg=lightgray}
+\setbeamerfont{block title}{size=\Large}
+\setbeamerfont{block body}{size=\large}
+\setbeamerfont{title}{size=\Huge}
+
+
+\title{Impact of Class Imbalance Handling in Neural Networks}
+\author{Hakan Körpe}
+\institute{TU Dortmund -- AIML Course}
+
+\begin{document}
+\begin{frame}{}
+
+% TU Dortmund logo at top-right (upload tud_logo.png / .pdf)
+\begin{textblock}{12}(65,2)
+    \includegraphics[width=12cm]{images/tud_logo}
+
+\end{textblock}
+
+\begin{columns}[t,totalwidth=\textwidth]
+
+% LEFT COLUMN -----------------------------------------------------------
+\begin{column}{0.32\textwidth}
+
+\begin{block}{Abstract}
+Class imbalance is a major challenge in machine learning. This poster compares
+the effect of class weighting and SMOTE on both tabular (Breast Cancer) and
+image-based (MNIST Binary) datasets. Metrics include F1, ROC-AUC, PR-AUC,
+and confusion matrices. We evaluate three datasets to show how imbalance severity affects different modalities (tabular, digits, clothing images).
+\end{block}
+
+\begin{block}{Datasets}
+\textbf{Breast Cancer (sklearn)}: binary classification with mild imbalance.\\
+\textbf{MNIST Binary}: class ``0'' vs ``non-zero'', minority ratio 2\%.\\
+\textbf{Fashion-MNIST Binary}: class ``T-shirt/top'' vs ``Other'', minority ratio 2\%.
+\end{block}
+
+\begin{block}{Methods}
+\begin{itemize}
+    \item Baseline neural network classifier
+    \item Class weighting using sklearn balanced weights
+    \item SMOTE oversampling for synthetic data generation
+    \item Evaluation: Confusion Matrix, ROC-AUC, PR-AUC
+\end{itemize}
+\end{block}
+
+\end{column}
+
+% MIDDLE COLUMN ---------------------------------------------------------
+\begin{column}{0.32\textwidth}
+
+\begin{block}{Breast Cancer Results}
+\centering
+
+% --- Class Weights ---
+\includegraphics[width=\linewidth]{images/bc_confusion_weights.png}\\[0.5em]
+\small\textbf{Class Weights – Confusion matrix.}
+Most negatives are classified correctly, but only about half of the positives are detected.
+
+\vspace{1.8em}
+
+\includegraphics[width=\linewidth]{images/bc_roc_pr_weights.png}\\[0.5em]
+\small\textbf{Class Weights – ROC \& PR.}
+ROC-AUC is high, but PR-AUC reveals limited precision due to extreme class imbalance.
+
+\vspace{2.0em}
+
+% --- SMOTE ---
+\includegraphics[width=\linewidth]{images/bc_confusion_smote.png}\\[0.5em]
+\small\textbf{SMOTE – Confusion matrix.}
+SMOTE increases minority recall at the cost of a few additional false positives.
+
+\vspace{1.8em}
+
+\includegraphics[width=\linewidth]{images/bc_roc_pr_smote.png}\\[0.5em]
+\small\textbf{SMOTE – ROC \& PR.}
+SMOTE improves PR-AUC significantly, showing better precision–recall trade-off.
+
+\normalsize
+\end{block}
+
+
+
+\begin{block}{Results Table}
+\begin{tabular}{lccc}
+\textbf{Method} & \textbf{F1} & \textbf{ROC-AUC} & \textbf{PR-AUC} \\ \hline
+Class Weights & 0.87 & 0.92 & 0.56 \\
+SMOTE         & 0.90 & 0.96 & 0.79 \\
+MNIST CW      & 1.00 & 0.99 & 0.73 \\
+FMNIST CW     & 0.86 & 0.96 & 0.10 \\
+\end{tabular}
+\end{block}
+
+\end{column}
+
+% RIGHT COLUMN ----------------------------------------------------------
+\begin{column}{0.32\textwidth}
+
+\begin{block}{MNIST Binary Results}
+\centering
+
+\includegraphics[width=\linewidth]{images/mnist_confusion.png}\\[0.5em]
+\small\textbf{MNIST Binary – Confusion matrix.}
+Both classes are recognized very well: almost all non-zero digits and most zeros are classified correctly.\\[1.0em]
+
+\vspace{1.8em}
+
+\includegraphics[width=\linewidth]{images/mnist_roc_pr.png}\\[0.5em]
+\small\textbf{MNIST Binary – ROC \& PR.}
+ROC-AUC is close to 1.0, and the PR curve shows high precision even at high recall, meaning the classifier is very confident on this task.
+
+\vspace{2.0em}
+
+
+% --- Fashion MNIST ---
+\includegraphics[width=\linewidth]{images/fmnist_confusion.png}\\[0.5em]
+\small\textbf{Fashion-MNIST – Confusion matrix.}\\
+T-shirt/top detection is harder: more overlap with other clothing categories, leading to lower minority recall.\\[1.0em]
+
+
+\vspace{1.8em}
+
+
+\includegraphics[width=\linewidth]{images/fmnist_roc_pr.png}\\[0.5em]
+\small\textbf{Fashion-MNIST – ROC \& PR.}\\
+ROC is strong, but the PR-AUC drops noticeably — a sign that class imbalance is much more challenging here.
+
+\normalsize
+\end{block}
+
+
+
+\begin{block}{Conclusion}
+\begin{itemize}
+    \item SMOTE significantly improves minority recall.
+    \item Class weighting is stable and simple for tabular data.
+    \item MNIST shows strong separability even under imbalance.
+    \item FMNIST is significantly harder, visible from low PR-AUC.
+    \item ROC-AUC is misleadingly high under extreme imbalance (important insight!).
+\end{itemize}
+\end{block}
+
+\end{column}
+
+\end{columns}
+
+\end{frame}
+\end{document}
