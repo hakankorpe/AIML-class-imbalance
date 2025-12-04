@@ -9,9 +9,19 @@
 
 % Logo positioning
 \usepackage{graphicx}
+\usepackage{qrcode}
 \usepackage{textpos}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc}
+
 \setlength{\TPHorizModule}{1cm}
 \setlength{\TPVertModule}{1cm}
+
+\setlength{\topmargin}{-2cm}
+\setlength{\headsep}{0pt}
+\setlength{\headheight}{0pt}
+
 
 % Colors
 \definecolor{darkblue}{RGB}{20,20,80}
@@ -29,13 +39,40 @@
 \institute{TU Dortmund -- AIML Course}
 
 \begin{document}
-\begin{frame}{}
+\begin{frame}[t]{} % align content to top
+\framesetup{width=\paperwidth} % allow full-width top block
 
-% TU Dortmund logo at top-right (upload tud_logo.png / .pdf)
-\begin{textblock}{12}(65,2)
-    \includegraphics[width=12cm]{images/tud_logo}
+% Remove default top spacing
+\vspace*{-1.0cm}
 
-\end{textblock}
+% ======================
+% TITLE BAR WITH QR CODE
+% ======================
+% ============================================
+% TOP TITLE BAR WITH QR CODE (no textblock)
+% ============================================
+\begin{tikzpicture}[remember picture,overlay]
+    % Title background bar (full width)
+    \node[anchor=north west, inner sep=0pt] 
+        at (current page.north west)
+        (titlebar)
+        {\begin{minipage}{\paperwidth}
+            \begin{beamercolorbox}[wd=\paperwidth,ht=5cm,dp=1cm,center]{block title}
+                {\fontsize{50}{56}\selectfont \textbf{Impact of Class Imbalance Handling in Neural Networks}}\\[0.4em]
+                {\Large Hakan Körpe — TU Dortmund}
+            \end{beamercolorbox}
+        \end{minipage}};
+\end{tikzpicture}
+
+% QR CODE IN TOP-RIGHT (aligned inside the bar, not clipped)
+
+\begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north east, xshift=-1.2cm, yshift=-1.2cm] at (current page.north east)
+        {\color{white}\qrcode[height=5em]{https://github.com/hakankorpe/AIML-class-imbalance}};
+\end{tikzpicture}
+
+\vspace*{3.5cm} % pushes your columns down below the title bar
+
 
 \begin{columns}[t,totalwidth=\textwidth]
 
@@ -64,14 +101,8 @@ and confusion matrices. We evaluate three datasets to show how imbalance severit
 \end{itemize}
 \end{block}
 
-\end{column}
-
-% MIDDLE COLUMN ---------------------------------------------------------
-\begin{column}{0.32\textwidth}
-
 \begin{block}{Breast Cancer Results}
 \centering
-
 % --- Class Weights ---
 \includegraphics[width=\linewidth]{images/bc_confusion_weights.png}\\[0.5em]
 \small\textbf{Class Weights – Confusion matrix.}
@@ -84,6 +115,16 @@ Most negatives are classified correctly, but only about half of the positives ar
 ROC-AUC is high, but PR-AUC reveals limited precision due to extreme class imbalance.
 
 \vspace{2.0em}
+
+\end{block}
+\end{column}
+
+% MIDDLE COLUMN ---------------------------------------------------------
+\begin{column}{0.32\textwidth}
+
+\begin{block}{Breast Cancer SMOTE Results}
+\centering
+
 
 % --- SMOTE ---
 \includegraphics[width=\linewidth]{images/bc_confusion_smote.png}\\[0.5em]
@@ -99,23 +140,6 @@ SMOTE improves PR-AUC significantly, showing better precision–recall trade-off
 \normalsize
 \end{block}
 
-
-
-\begin{block}{Results Table}
-\begin{tabular}{lccc}
-\textbf{Method} & \textbf{F1} & \textbf{ROC-AUC} & \textbf{PR-AUC} \\ \hline
-Class Weights & 0.87 & 0.92 & 0.56 \\
-SMOTE         & 0.90 & 0.96 & 0.79 \\
-MNIST CW      & 1.00 & 0.99 & 0.73 \\
-FMNIST CW     & 0.86 & 0.96 & 0.10 \\
-\end{tabular}
-\end{block}
-
-\end{column}
-
-% RIGHT COLUMN ----------------------------------------------------------
-\begin{column}{0.32\textwidth}
-
 \begin{block}{MNIST Binary Results}
 \centering
 
@@ -129,7 +153,17 @@ Both classes are recognized very well: almost all non-zero digits and most zeros
 \small\textbf{MNIST Binary – ROC \& PR.}
 ROC-AUC is close to 1.0, and the PR curve shows high precision even at high recall, meaning the classifier is very confident on this task.
 
-\vspace{2.0em}
+\end{block}
+
+
+\end{column}
+
+% RIGHT COLUMN ----------------------------------------------------------
+\begin{column}{0.32\textwidth}
+
+\begin{block}{Fashion-MNIST Binary Results}
+\centering
+
 
 
 % --- Fashion MNIST ---
@@ -149,6 +183,17 @@ ROC is strong, but the PR-AUC drops noticeably — a sign that class imbalance i
 \end{block}
 
 
+\begin{block}{Results Table}
+\begin{tabular}{lccc}
+\textbf{Method} & \textbf{F1} & \textbf{ROC-AUC} & \textbf{PR-AUC} \\ \hline
+Class Weights & 0.87 & 0.92 & 0.56 \\
+SMOTE         & 0.90 & 0.96 & 0.79 \\
+MNIST CW      & 1.00 & 0.99 & 0.73 \\
+FMNIST CW     & 0.86 & 0.96 & 0.10 \\
+\end{tabular}
+\end{block}
+
+\vspace{1.0em}
 
 \begin{block}{Conclusion}
 \begin{itemize}
@@ -160,9 +205,36 @@ ROC is strong, but the PR-AUC drops noticeably — a sign that class imbalance i
 \end{itemize}
 \end{block}
 
+
 \end{column}
 
 \end{columns}
+
+% ======================
+% BOTTOM LOGO BAR
+% ======================
+% ======================
+% BOTTOM BAR (same color as title)
+% ======================
+\begin{tikzpicture}[remember picture,overlay]
+
+    % --- Bottom dark blue bar ---
+    \node[anchor=south west, inner sep=0pt] at (current page.south west)
+        {\begin{minipage}{\paperwidth}
+            \begin{beamercolorbox}[wd=\paperwidth,ht=3.5cm,dp=0.5cm]{block title}
+            \end{beamercolorbox}
+        \end{minipage}};
+
+    % --- TU Dortmund logo, forced to white ---
+    \node[anchor=south west, xshift=1.2cm, yshift=0.8cm] at (current page.south west)
+        {\begingroup
+            \color{white}%
+            \includegraphics[height=2.5cm]{images/Technische_Universität_Dortmund_Logo.png}%
+        \endgroup};
+
+\end{tikzpicture}
+
+
 
 \end{frame}
 \end{document}
