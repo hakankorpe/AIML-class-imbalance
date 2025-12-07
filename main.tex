@@ -101,12 +101,18 @@ and confusion matrices. We evaluate three datasets to show how imbalance severit
 \end{itemize}
 \end{block}
 
+\begin{block}{Why Accuracy Fails Under Imbalance}
+With only 2\% minority samples, always predicting the majority gives 98\% accuracy. 
+ROC-AUC also remains high even for poor minority recall.
+PR-AUC is needed to evaluate minority detection.
+\end{block}
+
 \begin{block}{Breast Cancer Results}
 \centering
 % --- Class Weights ---
 \includegraphics[width=\linewidth]{images/bc_confusion_weights.png}\\[0.5em]
 \small\textbf{Class Weights – Confusion matrix.}
-Most negatives are classified correctly, but only about half of the positives are detected.
+Class weights help the model detect positives better, but recall remains unstable due to the extremely small number of minority samples.
 
 \vspace{1.8em}
 
@@ -155,55 +161,80 @@ ROC-AUC is close to 1.0, and the PR curve shows high precision even at high reca
 
 \end{block}
 
+\begin{block}{Results Table}
+\centering
+\begin{tabular}{lccc}
+\textbf{Method} & \textbf{F1} & \textbf{ROC-AUC} & \textbf{PR-AUC} \\ \hline
+Breast Cancer CW & 1.00 & 1.00 & 1.00 \\
+Breast Cancer Smote & 0.62 & 0.94 & 0.64 \\
+MNIST CW & 0.53 & 0.9988 & 0.807 \\
+FMNIST CW & 0.07 & 0.9846 & 0.125 \\
+\end{tabular}
+\end{block}
+
+
+
 
 \end{column}
 
 % RIGHT COLUMN ----------------------------------------------------------
 \begin{column}{0.32\textwidth}
 
+\begin{block}{Digit Difficulty Under Class Imbalance}
+\small
+Different MNIST digits suffer from imbalance in different ways:
+
+\begin{itemize}
+    \item \textbf{Digits 0 and 1} remain easy to detect even when rare  
+          (PR-AUC: 0.88–0.95).  
+          Their shapes are simple and distinct → low confusion.
+    
+    \item \textbf{Digits 8 and 9} collapse under imbalance  
+          (PR-AUC: 0.33–0.36).  
+          They are visually similar to multiple other digits  
+          (8 ↔ 3, 0, 9; 9 ↔ 4, 7).
+    
+    \item \textbf{Accuracy and ROC-AUC stay high}, but do not reflect the real difficulty.
+    
+    \item \textbf{PR-AUC reveals true minority-class performance}, showing large drops for complex digits.
+\end{itemize}
+
+\begin{center}
+\includegraphics[width=\linewidth]{images/mnist_pr_auc_digits.png}\\
+\small{PR-AUC comparison for minority digits 0, 1, 8, and 9.}
+\end{center}
+
+\end{block}
+
+
 \begin{block}{Fashion-MNIST Binary Results}
 \centering
 
-
+ 
 
 % --- Fashion MNIST ---
 \includegraphics[width=\linewidth]{images/fmnist_confusion.png}\\[0.5em]
 \small\textbf{Fashion-MNIST – Confusion matrix.}\\
 T-shirt/top detection is harder: more overlap with other clothing categories, leading to lower minority recall.\\[1.0em]
 
-
-\vspace{1.8em}
-
-
 \includegraphics[width=\linewidth]{images/fmnist_roc_pr.png}\\[0.5em]
 \small\textbf{Fashion-MNIST – ROC \& PR.}\\
-ROC is strong, but the PR-AUC drops noticeably — a sign that class imbalance is much more challenging here.
+ROC is strong, but the PR-AUC drops noticeably, a sign that class imbalance is much more challenging here.
 
 \normalsize
 \end{block}
 
 
-\begin{block}{Results Table}
-\begin{tabular}{lccc}
-\textbf{Method} & \textbf{F1} & \textbf{ROC-AUC} & \textbf{PR-AUC} \\ \hline
-Class Weights & 0.87 & 0.92 & 0.56 \\
-SMOTE         & 0.90 & 0.96 & 0.79 \\
-MNIST CW      & 1.00 & 0.99 & 0.73 \\
-FMNIST CW     & 0.86 & 0.96 & 0.10 \\
-\end{tabular}
-\end{block}
-
-\vspace{1.0em}
-
 \begin{block}{Conclusion}
 \begin{itemize}
-    \item SMOTE significantly improves minority recall.
-    \item Class weighting is stable and simple for tabular data.
-    \item MNIST shows strong separability even under imbalance.
-    \item FMNIST is significantly harder, visible from low PR-AUC.
-    \item ROC-AUC is misleadingly high under extreme imbalance (important insight!).
+    \item Class weighting performs extremely well on Breast Cancer data. SMOTE increases recall but may reduce precision, lowering F1 and PR-AUC.
+    \item MNIST remains highly separable even under extreme imbalance (2\% minority).
+    \item Fashion-MNIST is far more difficult: PR-AUC collapses despite a high ROC-AUC.
+    \item ROC-AUC can be misleading under imbalance; PR-AUC is the reliable metric.
+    \item Digit-wise MNIST imbalance shows large difficulty differences: 1 is easy, while 8 and 9 are much harder.
 \end{itemize}
 \end{block}
+
 
 
 \end{column}
@@ -229,7 +260,7 @@ FMNIST CW     & 0.86 & 0.96 & 0.10 \\
     \node[anchor=south west, xshift=1.2cm, yshift=0.8cm] at (current page.south west)
         {\begingroup
             \color{white}%
-            \includegraphics[height=2.5cm]{images/Technische_Universität_Dortmund_Logo.png}%
+            \includegraphics[height=2.5cm]{images/tu.png}%
         \endgroup};
 
 \end{tikzpicture}

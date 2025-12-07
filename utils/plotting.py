@@ -73,3 +73,21 @@ def plot_roc_pr(y_true, y_score, title_prefix, filename, pos_label=1):
     plt.savefig(out_path, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved ROC/PR curves to {out_path}")
+
+
+def plot_pr_auc_comparison(results, filename="mnist_pr_auc_digits.png"):
+
+    digits = [r["digit"] for r in results]
+    pr_values = [r["pr_auc"] for r in results]
+
+    plt.figure(figsize=(6,4))
+    plt.bar([str(d) for d in digits], pr_values, 
+            color=["#4CAF50","#8BC34A","#FFC107","#F44336"])
+    plt.xlabel("Minority Digit")
+    plt.ylabel("PR-AUC")
+    plt.title("PR-AUC by Minority Digit under 2% Imbalance")
+
+    plt.savefig(f"figures/{filename}", dpi=300, bbox_inches="tight")
+    plt.close()
+
+
