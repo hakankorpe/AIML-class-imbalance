@@ -1,84 +1,96 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-import sys
+import numpy as np
 import os
+import sys
+import argparse 
 
-# Fix imports to look at parent directory
+# Add parent directory to path to import models/data
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
 from data.load_mnist_binary import load_mnist_binary_digit
 from models.cgan import Generator, Discriminator
 
-def run_gan_training():
-    # --- Settings ---
-    z_dim = 100
-    lr = 0.0002
-    batch_size = 64
-    epochs = 200 # Higher epochs needed because we have very little data!
+# Hyperparameters
+BATCH_SIZE = 64
+LR = 0.0002
+Z_DIM = 100
+EPOCHS = 100 
+
+def train(digit):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    num_classes = 2 # 0 vs 1 (Binary task)
+    print(f"--- Training GAN for Digit {digit} ---")
 
-    print(f"Training GAN on {device} using imbalanced data...")
+    # 1. Load Data (Dynamic Digit)
+    # This loads ONLY the minority class for that specific digit
+    X_train, _, y_train, _ = load_mnist_binary_digit(minority_digit=digit, minority_ratio=0.02)
+    
+    # Select only the minority samples (the ones we want to generate)
+    # In binary setup, minority is class 1
+    X_minority = X_train[y_train == 1]
+    
+    # Convert to PyTorch
+    dataset = torch.tensor(X_minority).float()
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-    # 1. Load Data (Imbalanced 2% split)
-    # y_train is 0 (Majority) or 1 (Minority/Zero)
-    X_train, _, y_train, _ = load_mnist_binary_digit(minority_digit=0, minority_ratio=0.02)
+    # 2. Init Models
+    generator = Generator(Z_DIM, num_classes=2).to(device)
+    discriminator = Discriminator(num_classes=2).to(device)
     
-    # 2. Preprocess: [0, 1] -> [-1, 1] for Tanh activation
-    X_train = (X_train * 2) - 1.0
+    optimizer_G = optim.Adam(generator.parameters(), lr=LR, betas=(0.5, 0.999))
+    optimizer_D = optim.Adam(discriminator.parameters(), lr=LR, betas=(0.5, 0.999))
     
-    # 3. Create Loader
-    tensor_x = torch.tensor(X_train).float()
-    tensor_y = torch.tensor(y_train).long()
-    loader = DataLoader(TensorDataset(tensor_x, tensor_y), batch_size=batch_size, shuffle=True)
-
-    # 4. Initialize Models
-    generator = Generator(z_dim, num_classes=num_classes).to(device)
-    discriminator = Discriminator(num_classes=num_classes).to(device)
-    
-    opt_g = optim.Adam(generator.parameters(), lr=lr)
-    opt_d = optim.Adam(discriminator.parameters(), lr=lr)
     criterion = nn.BCELoss()
 
-    # 5. Training Loop
-    for epoch in range(epochs):
-        for batch_idx, (real_imgs, labels) in enumerate(loader):
-            real_imgs, labels = real_imgs.to(device), labels.to(device)
-            curr_batch_size = real_imgs.shape[0]
+    # 3. Training Loop
+    for epoch in range(EPOCHS):
+        for i, real_imgs in enumerate(dataloader):
+            batch_size = real_imgs.size(0)
+            real_imgs = real_imgs.to(device)
+            
+            # Labels
+            real_labels = torch.ones(batch_size, 1).to(device)
+            fake_labels = torch.zeros(batch_size, 1).to(device)
+            # Class labels for cGAN (all are class 1 "Minority")
+            class_labels = torch.ones(batch_size).long().to(device) 
 
             # --- Train Discriminator ---
-            noise = torch.randn(curr_batch_size, z_dim).to(device)
-            fake_imgs = generator(noise, labels)
+            optimizer_D.zero_grad()
+            outputs = discriminator(real_imgs, class_labels)
+            d_loss_real = criterion(outputs, real_labels)
             
-            # Real Loss
-            real_preds = discriminator(real_imgs, labels)
-            real_loss = criterion(real_preds, torch.ones_like(real_preds))
+            z = torch.randn(batch_size, Z_DIM).to(device)
+            fake_imgs = generator(z, class_labels)
+            outputs = discriminator(fake_imgs.detach(), class_labels)
+            d_loss_fake = criterion(outputs, fake_labels)
             
-            # Fake Loss
-            fake_preds = discriminator(fake_imgs.detach(), labels)
-            fake_loss = criterion(fake_preds, torch.zeros_like(fake_preds))
-            
-            d_loss = (real_loss + fake_loss) / 2
-            opt_d.zero_grad()
+            d_loss = d_loss_real + d_loss_fake
             d_loss.backward()
-            opt_d.step()
+            optimizer_D.step()
 
             # --- Train Generator ---
-            output = discriminator(fake_imgs, labels)
-            g_loss = criterion(output, torch.ones_like(output))
-            
-            opt_g.zero_grad()
+            optimizer_G.zero_grad()
+            outputs = discriminator(fake_imgs, class_labels)
+            g_loss = criterion(outputs, real_labels) # Trick D into thinking they are real
             g_loss.backward()
-            opt_g.step()
+            optimizer_G.step()
+            
+        if (epoch+1) % 20 == 0:
+            print(f"Epoch [{epoch+1}/{EPOCHS}] D_Loss: {d_loss.item():.4f} G_Loss: {g_loss.item():.4f}")
 
-        if epoch % 20 == 0:
-            print(f"Epoch {epoch}/{epochs} | D Loss: {d_loss.item():.4f} | G Loss: {g_loss.item():.4f}")
-
-    # 6. Save Model
-    torch.save(generator.state_dict(), "cgan_generator.pth")
-    print("GAN Saved to cgan_generator.pth")
+    # 4. Save with specific name
+    # Checks if we are running from root or inside experiments/
+    if os.getcwd().endswith('experiments'):
+        save_path = f"../cgan_generator_{digit}.pth"
+    else:
+        save_path = f"cgan_generator_{digit}.pth"
+        
+    torch.save(generator.state_dict(), save_path)
+    print(f"Model saved to {save_path}")
 
 if __name__ == "__main__":
-    run_gan_training()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--digit", type=int, default=0, help="Digit to train on (0-9)")
+    args = parser.parse_args()
+    
+    train(args.digit)
