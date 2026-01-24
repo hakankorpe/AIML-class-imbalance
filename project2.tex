@@ -1,0 +1,205 @@
+% A1 Portrait Poster Template (beamerposter)
+\documentclass[final]{beamer}
+
+% Poster package
+\usepackage[size=a1,orientation=portrait,scale=1.2]{beamerposter}
+
+% Theme
+\usetheme{default}
+
+% Packages
+\usepackage{graphicx}
+\usepackage{qrcode}
+\usepackage{textpos}
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc}
+\usepackage{booktabs}
+
+% Lengths
+\setlength{\TPHorizModule}{1cm}
+\setlength{\TPVertModule}{1cm}
+\setlength{\topmargin}{-2cm}
+\setlength{\headsep}{0pt}
+\setlength{\headheight}{0pt}
+
+% Colors
+\definecolor{darkblue}{RGB}{20,20,80}
+\definecolor{lightgray}{RGB}{240,240,240}
+
+\setbeamercolor{block title}{fg=white,bg=darkblue}
+\setbeamercolor{block body}{fg=black,bg=lightgray}
+\setbeamerfont{block title}{size=\Large}
+\setbeamerfont{block body}{size=\large}
+\setbeamerfont{title}{size=\Huge}
+
+% Metadata
+\title{Advanced Class Imbalance Handling: SMOTE vs. GANs vs. Augmentation}
+\author{Hakan Körpe}
+\institute{TU Dortmund -- AIML Course}
+
+\begin{document}
+\begin{frame}[t]{}
+\framesetup{width=\paperwidth}
+
+\vspace*{-1.0cm}
+
+% =======================
+% TOP TITLE BAR
+% =======================
+\begin{tikzpicture}[remember picture,overlay]
+\node[anchor=north west, inner sep=0pt] at (current page.north west)
+{
+\begin{minipage}{\paperwidth}
+\begin{beamercolorbox}[wd=\paperwidth,ht=5cm,dp=1cm,center]{block title}
+{\fontsize{40}{48}\selectfont \textbf{Advanced Class Imbalance Handling: SMOTE vs. GANs}}\\[0.4em]
+{\Large Hakan Körpe — TU Dortmund}
+\end{beamercolorbox}
+\end{minipage}
+};
+\end{tikzpicture}
+
+% QR Code
+\begin{tikzpicture}[remember picture,overlay]
+\node[anchor=north east, xshift=-1.2cm, yshift=-1.2cm]
+at (current page.north east)
+{\color{white}\qrcode[height=5em]{https://github.com/hakankorpe/AIML-class-imbalance/tree/second-project}};
+\end{tikzpicture}
+
+\vspace*{3.5cm}
+
+\begin{columns}[t,totalwidth=\textwidth]
+
+% =============================================================================
+% LEFT COLUMN
+% =============================================================================
+\begin{column}{0.48\textwidth}
+
+\begin{block}{Abstract}
+The handling of extreme class imbalance is examined using a binary MNIST task. Three data-level approaches are compared: SMOTE interpolation, geometric augmentation, and conditional GAN generation. Geometric augmentation improves feature learning but fails to produce usable minority detections under severe imbalance. SMOTE is best for minority classes with a simple geometric structure. For topologically complex digits, structural properties are better preserved by GAN-based generation.
+\end{block}
+
+\begin{block}{Problem Setup \& Methodology}
+\textbf{Dataset:} A binary MNIST classification task (Digit 0 vs Rest) is considered, with a \textbf{1:50 class imbalance}.\\
+\textbf{Minority Samples:} Approximately 120 images are available.\\
+\textbf{Objective:} Minority detection quality is evaluated under extreme imbalance.
+
+\vspace{0.5em}
+\begin{enumerate}
+\item \textbf{SMOTE:} Synthetic samples are generated via linear interpolation between minority neighbors.
+\item \textbf{Geometric Augmentation:} Input images are rotated ($\pm15^\circ$) without increasing class count.
+\item \textbf{Conditional GAN:} A deep generator is trained exclusively on minority-class samples.
+\end{enumerate}
+\end{block}
+
+\begin{block}{Experiment 1: Baseline vs. SMOTE}
+\centering
+\begin{columns}
+\begin{column}{0.6\textwidth}
+\includegraphics[width=\linewidth]{images/mnist_smote_conf.png}
+\end{column}
+\begin{column}{0.35\textwidth}
+\textbf{Result:} Near-perfect separation is achieved (\textbf{0.96 Recall}).\\[0.4em]
+\textbf{Insight:} Due to the simple topology of the digit, linear interpolation is sufficient for generating decision-consistent samples.
+\end{column}
+\end{columns}
+\end{block}
+
+\begin{block}{Experiment 2: The Augmentation Paradox}
+\centering
+\begin{columns}
+\begin{column}{0.6\textwidth}
+\includegraphics[width=\linewidth]{images/mnist_aug_conf.png}
+\end{column}
+\begin{column}{0.35\textwidth}
+\textbf{Result:} High ranking performance is observed, while \textbf{zero precision} is obtained.\\[0.4em]
+\textbf{Explanation:} At the selected decision threshold, predictions are assigned exclusively to the majority class.
+\end{column}
+\end{columns}
+\end{block}
+
+\begin{block}{Experiment 3: GAN Generation}
+\centering
+\begin{columns}
+\begin{column}{0.6\textwidth}
+\includegraphics[width=\linewidth]{images/mnist_gan_conf.png}
+\end{column}
+\begin{column}{0.35\textwidth}
+\textbf{Result:} Strong recall (0.88), noisier boundary.\\[0.4em]
+\textbf{Challenge:} Learning full distributions from $\approx$100 samples.
+\end{column}
+\end{columns}
+\end{block}
+
+\end{column}
+
+% =============================================================================
+% RIGHT COLUMN
+% =============================================================================
+\begin{column}{0.48\textwidth}
+
+\begin{block}{Why Precision Matters}
+Under extreme imbalance, \textbf{accuracy and ROC-AUC are misleading}. Predicting the majority class yields high accuracy but \textbf{zero usable detections}. We therefore prioritize \textbf{PR-AUC}.
+
+\vspace{0.4em}
+\small \textit{All confusion matrices are shown at threshold 0.5, reflecting deployment-time decisions.}
+\end{block}
+
+\begin{block}{Visual Comparison: Simple vs. Complex Topology}
+\centering
+\includegraphics[width=\linewidth]{images/grand_comparison_0.png}
+
+\small \textit{Digit 0:} SMOTE preserves topology; GAN adds variance.
+
+\vspace{1em}
+
+\includegraphics[width=\linewidth]{images/grand_comparison_8.png}
+
+\small \textit{Digit 8:} GAN preserves crossings; SMOTE introduces artifacts.
+\end{block}
+
+\begin{block}{Quantitative Benchmarks (Decision Metrics)}
+\centering
+\vspace{0.4em}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Method} & \textbf{PR-AUC} & \textbf{ROC-AUC} & \textbf{Status} \\
+\midrule
+Baseline (Weights) & 0.41 & 0.9953 & Reference \\
+\textbf{SMOTE} & \textbf{0.96} & \textbf{0.9997} & \textbf{Best} \\
+Augmentation & 0.00 & 0.9979 & Fail \\
+GAN (cGAN) & 0.88 & $\approx$0.99 & Competitive \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.4em}
+\end{block}
+
+\begin{block}{Conclusion}
+\begin{enumerate}
+\item SMOTE is shown to be effective for minority classes with simple geometric structure.
+\item GAN-based generation is found to better preserve complex topological features.
+\item Geometric augmentation alone is insufficient for correcting extreme class imbalance.
+\end{enumerate}
+\end{block}
+\end{column}
+\end{columns}
+
+% =======================
+% BOTTOM BAR
+% =======================
+\begin{tikzpicture}[remember picture,overlay]
+\node[anchor=south west, inner sep=0pt] at (current page.south west)
+{
+\begin{minipage}{\paperwidth}
+\begin{beamercolorbox}[wd=\paperwidth,ht=3.5cm,dp=0.5cm]{block title}
+\end{beamercolorbox}
+\end{minipage}
+};
+
+\node[anchor=south west, xshift=1.2cm, yshift=0.8cm]
+at (current page.south west)
+{\color{white}\includegraphics[height=2.5cm]{images/tu.png}};
+\end{tikzpicture}
+
+\end{frame}
+\end{document}
